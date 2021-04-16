@@ -1,0 +1,5 @@
+.MuiInputLabel-root {
+  display: block;
+  transform-origin: top left;
+  color: wheat !important;
+}

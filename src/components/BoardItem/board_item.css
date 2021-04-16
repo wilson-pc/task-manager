@@ -1,0 +1,12 @@
+.MuiCardContent-root h6 label {
+  display: block;
+  transform-origin: top left;
+  color: black !important;
+}
+
+.MuiCardContent-root h2 label {
+  display: block;
+  transform-origin: top left;
+  color: black !important;
+  font-size: 1.5em;
+}
