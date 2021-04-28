@@ -5,14 +5,14 @@ import Dialog from "@material-ui/core/Dialog";
 import DialogContent from "@material-ui/core/DialogContent";
 import { Button, TextField, Grid } from "@material-ui/core";
 import firebase from "../../boot/firebase";
-import { connect } from "react-redux";
+import { useSelector } from "react-redux";
 
 const boards = firebase.firestore().collection("boards");
 
 function SimpleDialog(props) {
   const [name, setName] = React.useState("");
   const [description, setDescription] = React.useState("");
-
+  const { user } = useSelector((state) => state.auth);
   const { onClose, open } = props;
 
   const handleClose = () => {
@@ -21,17 +21,14 @@ function SimpleDialog(props) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    console.log(props);
-    console.log({
-      name: name,
-      description: description,
-      userId: props.auth.user.id,
-    });
+
     await boards.add({
       name: name,
       description: description,
-      userId: props.auth.user.id,
+      userId: user.id,
     });
+    setDescription("");
+    setName("");
     onClose();
   };
 
@@ -92,11 +89,4 @@ SimpleDialog.propTypes = {
   open: PropTypes.bool.isRequired,
 };
 
-function mapStateToProps(state) {
-  return {
-    loggedIn: state.auth.loggedIn,
-    auth: state.auth.user,
-  };
-}
-
-export default connect(mapStateToProps)(SimpleDialog);
+export default SimpleDialog;

@@ -4,13 +4,15 @@ import { withStyles } from "@material-ui/core/styles";
 import Card from "@material-ui/core/Card";
 import CardActions from "@material-ui/core/CardActions";
 import CardContent from "@material-ui/core/CardContent";
-import MuiEditableLabel from "mui-editable-label";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import CardActionArea from "@material-ui/core/CardActionArea";
 import CardMedia from "@material-ui/core/CardMedia";
+import { EditText } from "..";
 import { withRouter } from "react-router-dom";
+import firebase from "../../boot/firebase";
 import "./board_item.css";
+const boards = firebase.firestore().collection("boards");
 
 const useStyles = {
   root: {
@@ -40,19 +42,28 @@ class BoardItem extends Component {
             <CardContent>
               <Typography gutterBottom variant="h5" component="h2">
                 {this.props.private ? (
-                  <MuiEditableLabel
-                    initialValue={this.props.board.name}
-                  ></MuiEditableLabel>
+                  <EditText
+                    multiline={false}
+                    text={this.props.board.name}
+                    keyEnter={(text) => {
+                      boards.doc(this.props.board.id).update({ name: text });
+                    }}
+                  ></EditText>
                 ) : (
                   this.props.board.name
                 )}
               </Typography>
               <Typography variant="body2" color="textSecondary" component="h6">
                 {this.props.private ? (
-                  <MuiEditableLabel
-                    className="edit-description"
-                    initialValue={this.props.board.description}
-                  ></MuiEditableLabel>
+                  <EditText
+                    multiline={true}
+                    text={this.props.board.description}
+                    keyEnter={(text) => {
+                      boards
+                        .doc(this.props.board.id)
+                        .update({ description: text });
+                    }}
+                  ></EditText>
                 ) : (
                   this.props.board.description
                 )}

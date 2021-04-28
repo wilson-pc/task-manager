@@ -26,6 +26,7 @@ class RegisterForm extends React.Component {
     this.setState({ state: true });
   };
   codeVerifySubmit = (event) => {
+    event.preventDefault();
     window.confirmationResult
       .confirm(document.getElementById("verificationcode").value)
       .then(async (result) => {
@@ -141,7 +142,7 @@ class RegisterForm extends React.Component {
             });
         }
         return (
-          <form>
+          <form onSubmit={this.codeVerifySubmit}>
             <Grid container direction="column" spacing={2}>
               <Grid item>
                 <TextField
@@ -171,9 +172,8 @@ class RegisterForm extends React.Component {
                 <Button
                   variant="contained"
                   color="primary"
-                  type="button"
+                  type="submit"
                   className="button-block"
-                  onClick={this.codeVerifySubmit}
                   disabled={this.state.captcha}
                 >
                   Verificar

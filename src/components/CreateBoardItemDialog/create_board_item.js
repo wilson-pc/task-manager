@@ -5,13 +5,11 @@ import Dialog from "@material-ui/core/Dialog";
 import DialogContent from "@material-ui/core/DialogContent";
 import { Button, TextField, Grid } from "@material-ui/core";
 import firebase from "../../boot/firebase";
-import { connect } from "react-redux";
 
 const boards = firebase.firestore().collection("boards");
 
 function CreateItemDialog(props) {
   const [name, setName] = React.useState("");
-
   const { onClose, open, boardId } = props;
 
   const handleClose = () => {
@@ -21,10 +19,11 @@ function CreateItemDialog(props) {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    await boards
+    boards
       .doc(boardId)
       .collection("items")
       .add({ state: "PENDING", name: name });
+    setName("");
     onClose();
   };
 
@@ -75,11 +74,4 @@ CreateItemDialog.propTypes = {
   boardId: PropTypes.string.isRequired,
 };
 
-function mapStateToProps(state) {
-  return {
-    loggedIn: state.auth.loggedIn,
-    auth: state.auth.user,
-  };
-}
-
-export default connect(mapStateToProps)(CreateItemDialog);
+export default CreateItemDialog;

@@ -21,7 +21,8 @@ class LoginForm extends React.Component {
     console.log(this.state);
     this.setState({ state: true });
   };
-  handleVerify = () => {
+  handleVerify = (e) => {
+    e.preventDefault();
     window.confirmationResult
       .confirm(document.getElementById("verificationcode").value)
       .then((result) => {
@@ -103,7 +104,7 @@ class LoginForm extends React.Component {
             });
         }
         return (
-          <form>
+          <form onSubmit={this.handleVerify}>
             <Grid container direction="column" spacing={2}>
               <Grid item>
                 <TextField
@@ -133,9 +134,8 @@ class LoginForm extends React.Component {
                 <Button
                   variant="contained"
                   color="primary"
-                  type="button"
+                  type="submit"
                   className="button-block"
-                  onClick={this.handleVerify}
                   disabled={this.state.captcha}
                 >
                   Verificar

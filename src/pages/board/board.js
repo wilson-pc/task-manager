@@ -1,30 +1,17 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
-import MuiEditableLabel from "mui-editable-label";
 import Button from "@material-ui/core/Button";
-import { connect } from "react-redux";
+import { connect, useSelector, useDispatch } from "react-redux";
 import { CreateBoardItemDialog } from "../../components";
 import { withRouter } from "react-router";
+import { seItems } from "../../store/item/action";
 import firebase from "../../boot/firebase";
+import { EditText } from "../../components";
 import "./board.css";
+import { getItemsFromBD } from "./helper";
 const boards = firebase.firestore().collection("boards");
 
-const columnsFromBackend = {
-  PENDING: {
-    name: "To do",
-    items: [],
-  },
-  IN_PROGRESS: {
-    name: "In Progress",
-    items: [],
-  },
-  DONE: {
-    name: "Done",
-    items: [],
-  },
-};
-
-const onDragEnd = (boardId, result, columns, setColumns) => {
+const onDragEnd = (boardId, result, columns, dispatch) => {
   /*
   console.log(result.source.droppableId);
   console.log(result.destination.droppableId, result.draggableId);
@@ -57,17 +44,20 @@ const onDragEnd = (boardId, result, columns, setColumns) => {
       .doc(result.draggableId)
       .update({ state: result.destination.droppableId });
     destItems.splice(destination.index, 0, removed);
-    setColumns({
-      ...columns,
-      [source.droppableId]: {
-        ...sourceColumn,
-        items: sourceItems,
-      },
-      [destination.droppableId]: {
-        ...destColumn,
-        items: destItems,
-      },
-    });
+
+    dispatch(
+      seItems({
+        ...columns,
+        [source.droppableId]: {
+          ...sourceColumn,
+          items: sourceItems,
+        },
+        [destination.droppableId]: {
+          ...destColumn,
+          items: destItems,
+        },
+      })
+    );
   } else {
     const column = columns[source.droppableId];
     let copiedItems = [...column.items];
@@ -77,31 +67,40 @@ const onDragEnd = (boardId, result, columns, setColumns) => {
       copiedItems = [];
     }
 
-    setColumns({
-      ...columns,
-      [source.droppableId]: {
-        ...column,
-        items: copiedItems,
-      },
-    });
+    dispatch(
+      seItems({
+        ...columns,
+        [source.droppableId]: {
+          ...column,
+          items: copiedItems,
+        },
+      })
+    );
   }
 };
 
 function Board(props) {
-  const [columns, setColumns] = useState([]);
+  const dispatch = useDispatch();
   const { id } = props.match.params;
   const [, updateState] = useState();
   const [isDrag, setIsDrag] = useState(true);
   const forceUpdate = useCallback(() => updateState({}), []);
   const [open, setOpen] = useState(false);
-  useEffect(() => {
-    console.log(columns);
-    boards
+
+  //const columnsFromBackend = useSelector((state) => state.item);
+  const columnsFromBackend = useSelector((state) => state.item);
+
+  const listenBoard = useCallback(() =>
+    getItemsFromBD(boards.doc(id).collection("items"), forceUpdate)(dispatch)
+  );
+
+  const getBoard = async () => {
+    await boards
       .doc(id)
       .get()
       .then((doc) => {
-        if (props.auth?.loggedIn) {
-          if (doc.data().userId !== props.auth.user.id) {
+        if (props.loggedIn) {
+          if (doc.data().userId !== props.auth.id) {
             setIsDrag(true);
           } else {
             setIsDrag(false);
@@ -110,6 +109,13 @@ function Board(props) {
           setIsDrag(true);
         }
       });
+  };
+
+  useEffect(() => {
+    listenBoard();
+
+    getBoard();
+    /*
     boards
       .doc(id)
       .collection("items")
@@ -125,11 +131,12 @@ function Board(props) {
             content: doc.data().name,
           });
         });
-
-        setColumns(columnsFromBackend);
-        forceUpdate();
         console.log(columnsFromBackend);
+        dispatch(seItems(columnsFromBackend));
+
+        forceUpdate();
       });
+    ]*/
   }, []);
   const handleClickOpen = () => {
     setOpen(true);
@@ -158,85 +165,103 @@ function Board(props) {
       ) : null}
 
       <div
-        style={{ display: "flex", justifyContent: "center", height: "100%" }}
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          height: "100%",
+          overflow: "auto",
+          width: "fit-content",
+          marginLeft: "auto",
+          marginRight: "auto",
+        }}
       >
         <DragDropContext
-          onDragEnd={(result) => onDragEnd(id, result, columns, setColumns)}
+          onDragEnd={(result) =>
+            onDragEnd(id, result, columnsFromBackend, dispatch)
+          }
         >
-          {Object.entries(columns).map(([columnId, column], index) => {
-            return (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
-                key={columnId}
-              >
-                <h2>{column.name}</h2>
-                <div style={{ margin: 8 }}>
-                  <Droppable droppableId={columnId} key={columnId} disabled>
-                    {(provided, snapshot) => {
-                      return (
-                        <div
-                          {...provided.droppableProps}
-                          ref={provided.innerRef}
-                          style={{
-                            background: snapshot.isDraggingOver
-                              ? "lightblue"
-                              : "lightgrey",
-                            padding: 4,
-                            width: 250,
-                            minHeight: 500,
-                          }}
-                        >
-                          {column.items.map((item, index) => {
-                            return (
-                              <Draggable
-                                key={item.id}
-                                draggableId={item.id}
-                                index={index}
-                                isDragDisabled={isDrag}
-                              >
-                                {(provided, snapshot) => {
-                                  return (
-                                    <div
-                                      ref={provided.innerRef}
-                                      {...provided.draggableProps}
-                                      {...provided.dragHandleProps}
-                                      style={{
-                                        userSelect: "none",
-                                        padding: 16,
-                                        margin: "0 0 8px 0",
-                                        minHeight: "50px",
-                                        backgroundColor: snapshot.isDragging
-                                          ? "#263B4A"
-                                          : "#456C86",
-                                        color: "white",
-                                        ...provided.draggableProps.style,
-                                      }}
-                                    >
-                                      <MuiEditableLabel
-                                        initialValue={item.content}
-                                        onBlur={(value) => {
-                                          updateItem(value, item.id);
+          {Object.entries(columnsFromBackend).map(
+            ([columnId, column], index) => {
+              return (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    minWidth: 250,
+                  }}
+                  key={columnId}
+                >
+                  <h2>{column.name}</h2>
+                  <div style={{ margin: 8, width: "100%" }}>
+                    <Droppable droppableId={columnId} key={columnId} disabled>
+                      {(provided, snapshot) => {
+                        return (
+                          <div
+                            {...provided.droppableProps}
+                            ref={provided.innerRef}
+                            style={{
+                              background: snapshot.isDraggingOver
+                                ? "lightblue"
+                                : "lightgrey",
+                              padding: 4,
+                              width: "100%",
+                              minHeight: 500,
+                            }}
+                          >
+                            {column.items.map((item, index) => {
+                              return (
+                                <Draggable
+                                  key={item.id}
+                                  draggableId={item.id}
+                                  index={index}
+                                  isDragDisabled={isDrag}
+                                >
+                                  {(provided, snapshot) => {
+                                    return (
+                                      <div
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        {...provided.dragHandleProps}
+                                        style={{
+                                          userSelect: "none",
+                                          padding: 16,
+                                          margin: "0 0 8px 0",
+                                          minHeight: "50px",
+                                          backgroundColor: snapshot.isDragging
+                                            ? "#263B4A"
+                                            : "#456C86",
+                                          color: "white",
+                                          ...provided.draggableProps.style,
                                         }}
-                                      />
-                                    </div>
-                                  );
-                                }}
-                              </Draggable>
-                            );
-                          })}
-                          {provided.placeholder}
-                        </div>
-                      );
-                    }}
-                  </Droppable>
+                                      >
+                                        {!isDrag ? (
+                                          <EditText
+                                            multiline={true}
+                                            text={item.content}
+                                            keyEnter={(text) => {
+                                              updateItem(text, item.id);
+                                            }}
+                                          ></EditText>
+                                        ) : (
+                                          <h4>{item.content}</h4>
+                                        )}
+                                      </div>
+                                    );
+                                  }}
+                                </Draggable>
+                              );
+                            })}
+                            {provided.placeholder}
+                          </div>
+                        );
+                      }}
+                    </Droppable>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            }
+          )}
         </DragDropContext>
       </div>
     </div>

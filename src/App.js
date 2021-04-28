@@ -1,9 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import "./App.css";
 import { MainLayout } from "./layouts";
 import { makeStyles } from "@material-ui/core/styles";
-import { connect } from "react-redux";
-import { bindActionCreators } from "redux";
+import { useSelector, useDispatch } from "react-redux";
 import { logIn, logOut } from "./store/auth/action";
 import { Backdrop, CircularProgress } from "@material-ui/core";
 import firebase from "./boot/firebase";
@@ -19,6 +18,9 @@ const useStyles = makeStyles((theme) => ({
 function App(props) {
   const classes = useStyles();
   const [open, setOpen] = React.useState(true);
+  const dispatch = useDispatch();
+  const { waitingUser } = useSelector((state) => state.auth);
+  //const incrementCounter = useCallback(() => dispatch(logOut), [dispatch]);
 
   useEffect(() => {
     firebase.auth().onAuthStateChanged(async (user) => {
@@ -30,23 +32,24 @@ function App(props) {
           console.log(rp);
           doc = { id: rp.id };
         });
-        console.log(doc);
-        props.handlelogIn({
-          loggedIn: true,
-          waitingUser: false,
-          user: {
-            id: doc.id,
-            uid: user.uid,
-            phone: user.phoneNumber,
-            username: user.displayName,
-          },
-        });
+        dispatch(
+          logIn({
+            loggedIn: true,
+            waitingUser: false,
+            user: {
+              id: doc.id,
+              uid: user.uid,
+              phone: user.phoneNumber,
+              username: user.displayName,
+            },
+          })
+        );
       } else {
-        props.handlelogOut();
+        dispatch(logOut());
       }
     });
   }, []);
-  return props.waitingUser ? (
+  return waitingUser ? (
     <Backdrop className={classes.backdrop} open={open}>
       <CircularProgress color="inherit" />
     </Backdrop>
@@ -55,23 +58,4 @@ function App(props) {
   );
 }
 
-function mapStateToProps(state) {
-  return {
-    loggedIn: state.auth.loggedIn,
-    user: state.auth.user,
-    waitingUser: state.auth.waitingUser,
-  };
-}
-
-function mapDispatchToProps(dispatch) {
-  return bindActionCreators(
-    {
-      handlelogOut: logOut,
-
-      handlelogIn: (payload) => dispatch(logIn(payload)),
-    },
-    dispatch
-  );
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(App);
+export default App;

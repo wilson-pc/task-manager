@@ -10,6 +10,5 @@ export function loading() {
 }
 
 export function logIn(data) {
-  console.log("pyalaod event", data);
   return { type: LOGIN, payload: data };
 }

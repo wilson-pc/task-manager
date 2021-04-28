@@ -1,16 +1,13 @@
 import React from "react";
 import { AppBar, Toolbar, IconButton, Typography } from "@material-ui/core";
-import { InputBase, MenuItem, Menu } from "@material-ui/core";
-import MenuIcon from "@material-ui/icons/Menu";
-import SearchIcon from "@material-ui/icons/Search";
+import { MenuItem, Menu } from "@material-ui/core";
 import AccountCircle from "@material-ui/icons/AccountCircle";
 import MoreIcon from "@material-ui/icons/MoreVert";
 import { Button, Container } from "@material-ui/core";
 import { Switch, Route, useHistory } from "react-router-dom";
 import firebase from "../../boot/firebase";
-import { logIn, logOut } from "../../store/auth/action";
-import { connect } from "react-redux";
-import { bindActionCreators } from "redux";
+import { logOut } from "../../store/auth/action";
+import { useSelector, useDispatch } from "react-redux";
 import {
   LoginPage,
   MyBoardsPage,
@@ -26,6 +23,8 @@ function MainLayout(props) {
   const history = useHistory();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = React.useState(null);
+  const { loggedIn } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
 
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
@@ -44,7 +43,7 @@ function MainLayout(props) {
   };
   const exit = async () => {
     await firebase.auth().signOut();
-    props.handlelogOut();
+    dispatch(logOut());
     handleMenuClose();
     history.push("/");
   };
@@ -73,7 +72,7 @@ function MainLayout(props) {
 
   const mobileMenuId = "primary-search-account-menu-mobile";
   const renderMobileMenu = () => {
-    if (props.loggedIn) {
+    if (loggedIn) {
       return (
         <Menu
           anchorEl={mobileMoreAnchorEl}
@@ -110,7 +109,7 @@ function MainLayout(props) {
     }
   };
   const renderMenuAuth = () => {
-    if (props.loggedIn) {
+    if (loggedIn) {
       return (
         <div className={classes.sectionDesktop}>
           <IconButton
@@ -144,30 +143,10 @@ function MainLayout(props) {
     <div className={classes.grow}>
       <AppBar position="static">
         <Toolbar>
-          <IconButton
-            edge="start"
-            className={classes.menuButton}
-            color="inherit"
-            aria-label="open drawer"
-          >
-            <MenuIcon />
-          </IconButton>
           <Typography className={classes.title} variant="h6" noWrap>
             Task Manager
           </Typography>
-          <div className={classes.search}>
-            <div className={classes.searchIcon}>
-              <SearchIcon />
-            </div>
-            <InputBase
-              placeholder="Search…"
-              classes={{
-                root: classes.inputRoot,
-                input: classes.inputInput,
-              }}
-              inputProps={{ "aria-label": "search" }}
-            />
-          </div>
+
           <div className={classes.grow} />
           <div className={classes.sectionDesktop}>
             <IconButton
@@ -196,7 +175,7 @@ function MainLayout(props) {
       {renderMobileMenu()}
       {renderMenu}
 
-      <Container>
+      <Container style={{ overflowY: "auto" }}>
         <br></br>
 
         <Switch>
@@ -213,7 +192,7 @@ function MainLayout(props) {
           <PrivateRoute
             path="/my-boards"
             component={MyBoardsPage}
-            isAuthenticated={props.loggedIn}
+            isAuthenticated={loggedIn}
           />
           <Route exact path="/board/:id">
             <BoardPage />
@@ -224,22 +203,4 @@ function MainLayout(props) {
   );
 }
 
-function mapStateToProps(state) {
-  return {
-    loggedIn: state.auth.loggedIn,
-    user: state.auth.user,
-  };
-}
-
-function mapDispatchToProps(dispatch) {
-  return bindActionCreators(
-    {
-      handlelogOut: logOut,
-
-      handlelogIn: (payload) => dispatch(logIn(payload)),
-    },
-    dispatch
-  );
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(MainLayout);
+export default MainLayout;
