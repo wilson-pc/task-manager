@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { TextField } from "@material-ui/core";
+import { TextField, Typography } from "@material-ui/core";
 import PropTypes from "prop-types";
 
 class EditText extends Component {
@@ -37,7 +37,9 @@ class EditText extends Component {
             }}
           />
         ) : (
-          <h4 onDoubleClick={this.btnClick}>{this.state.text}</h4>
+          <Typography onDoubleClick={this.btnClick}>
+            {this.state.text}{" "}
+          </Typography>
         )}
       </div>
     );

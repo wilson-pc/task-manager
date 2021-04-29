@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
-import Button from "@material-ui/core/Button";
+import {
+  Button,
+  Card,
+  CardContent,
+  Typography,
+  Toolbar,
+  AppBar,
+} from "@material-ui/core";
 import { connect, useSelector, useDispatch } from "react-redux";
 import { CreateBoardItemDialog } from "../../components";
 import { withRouter } from "react-router";
@@ -192,8 +199,11 @@ function Board(props) {
                   }}
                   key={columnId}
                 >
-                  <h2>{column.name}</h2>
-                  <div style={{ margin: 8, width: "100%" }}>
+                  <div style={{ margin: 8, width: "90%" }}>
+                    <Toolbar style={{ "background-color": "#3f51b5" }}>
+                      <Typography variant="h6">{column.name}</Typography>
+                    </Toolbar>
+
                     <Droppable droppableId={columnId} key={columnId} disabled>
                       {(provided, snapshot) => {
                         return (
@@ -201,9 +211,8 @@ function Board(props) {
                             {...provided.droppableProps}
                             ref={provided.innerRef}
                             style={{
-                              background: snapshot.isDraggingOver
-                                ? "lightblue"
-                                : "lightgrey",
+                              background: "#26a69a",
+
                               padding: 4,
                               width: "100%",
                               minHeight: 500,
@@ -225,7 +234,7 @@ function Board(props) {
                                         {...provided.dragHandleProps}
                                         style={{
                                           userSelect: "none",
-                                          padding: 16,
+                                          padding: 3,
                                           margin: "0 0 8px 0",
                                           minHeight: "50px",
                                           backgroundColor: snapshot.isDragging
@@ -236,15 +245,25 @@ function Board(props) {
                                         }}
                                       >
                                         {!isDrag ? (
-                                          <EditText
-                                            multiline={true}
-                                            text={item.content}
-                                            keyEnter={(text) => {
-                                              updateItem(text, item.id);
-                                            }}
-                                          ></EditText>
+                                          <Card>
+                                            <CardContent>
+                                              <EditText
+                                                multiline={true}
+                                                text={item.content}
+                                                keyEnter={(text) => {
+                                                  updateItem(text, item.id);
+                                                }}
+                                              ></EditText>
+                                            </CardContent>
+                                          </Card>
                                         ) : (
-                                          <h4>{item.content}</h4>
+                                          <Card>
+                                            <CardContent>
+                                              <Typography>
+                                                Word of the Day
+                                              </Typography>
+                                            </CardContent>
+                                          </Card>
                                         )}
                                       </div>
                                     );
